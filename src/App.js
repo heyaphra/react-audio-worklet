@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
-import MessengerWorkletNode from './messenger-node';
 
 class App extends Component {
   constructor() {
@@ -16,8 +15,15 @@ class App extends Component {
       <div className="App">
         <header className="App-header">
           <img src={logo} className="App-logo" alt="logo" />
+          React + AudioWorklet = ❤
           <p>
-            AudioWorklet meets React
+          <select>
+            <option value="bypasser">Bypasser</option>
+            <option value="filter">One Pole Filter</option>
+            <option value="noise">Noise Generator</option>
+            <option value="bitcrusher">Bit Crusher</option>
+            <option value="message">Message Port</option>
+          </select>
           </p>
         </header>
       </div>
