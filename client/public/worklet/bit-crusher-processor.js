@@ -9,7 +9,7 @@
  * @extends AudioWorkletProcessor
  * @see https://webaudio.github.io/web-audio-api/#the-bitcrusher-node
  */
-export default class BitCrusherProcessor extends AudioWorkletProcessor {
+class BitCrusherProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
       return [
         {name: 'bitDepth', defaultValue: 12, minValue: 1, maxValue: 16}, {

@@ -5,7 +5,7 @@
  * @extends AudioWorkletProcessor
  */
 
-export default class BypassProcessor extends AudioWorkletProcessor {
+class BypassProcessor extends AudioWorkletProcessor {
 
     constructor() {
       super();
