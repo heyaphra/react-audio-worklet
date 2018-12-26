@@ -48,9 +48,9 @@ class App extends Component {
   bypassProcessor() {
     const { actx } = this;
     this.bypasserNode = new AudioWorkletNode(actx, 'bypass-processor');
-    this.oscillator = actx.createOscillator();
-    this.oscillator.connect(this.bypasserNode).connect(actx.destination);
-    this.oscillator.start();
+    const oscillator  = actx.createOscillator();
+    oscillator.connect(this.bypasserNode).connect(actx.destination);
+    oscillator.start();
   }
   /* The example below initially demonstrated a one-off scheduled event. I've modified it to play
     based on the AudioContext's currentTime so that it can be replayed at the press of a button. 
@@ -63,16 +63,16 @@ class App extends Component {
       const middle = actx.currentTime + 4;
       const end = actx.currentTime + 8;
       this.filterNode = new AudioWorkletNode(actx, 'one-pole-processor');
-      this.oscillator = actx.createOscillator();
-      this.oscillator.connect(this.filterNode).connect(actx.destination);
-      this.oscillator.start();
+      const oscillator = actx.createOscillator();
+      oscillator.connect(this.filterNode).connect(actx.destination);
+      oscillator.start();
       const frequencyParam = this.filterNode.parameters.get('frequency');
       frequencyParam
           .setValueAtTime(0.01, beginning)
           .exponentialRampToValueAtTime(actx.sampleRate * 0.5, middle)
           .exponentialRampToValueAtTime(0.01, end);
       // This implementation of osc.onended is glitchy because the beginning, middle, and end must be managed in state.
-      // this.oscillator.onended = () => {
+      // oscillator.onended = () => {
       //     this.setState({ isPlaying: false })
       // }
     }
@@ -91,14 +91,14 @@ class App extends Component {
     }
     bitCrusherProcessor() {
       const { actx } = this;
-      this.oscillator = actx.createOscillator();
+      const oscillator = actx.createOscillator();
       this.bitCrusherNode = new AudioWorkletNode(actx, 'bit-crusher-processor');
       const paramBitDepth = this.bitCrusherNode.parameters.get('bitDepth');
       const paramReduction = this.bitCrusherNode.parameters.get('frequencyReduction');
-      this.oscillator.type = 'sawtooth';
-      this.oscillator.frequency.value = 5000;
+      oscillator.type = 'sawtooth';
+      oscillator.frequency.value = 5000;
       paramBitDepth.setValueAtTime(1, 0);
-      this.oscillator.connect(this.bitCrusherNode).connect(actx.destination);
+      oscillator.connect(this.bitCrusherNode).connect(actx.destination);
       const beginning = actx.currentTime;
       const middle = actx.currentTime + 4;
       const end = actx.currentTime + 8;
@@ -108,8 +108,8 @@ class App extends Component {
       paramReduction.linearRampToValueAtTime(0.1, middle);
       paramReduction.exponentialRampToValueAtTime(0.01, end);
       // Play the tone for 8 seconds.
-      this.oscillator.start();
-      this.oscillator.stop(end);
+      oscillator.start();
+      oscillator.stop(end);
     }
   /* The function below loads modules when selected from the dropdown menu. */
 handleSelect(e) {
