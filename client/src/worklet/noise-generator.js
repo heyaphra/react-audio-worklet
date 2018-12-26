@@ -24,7 +24,6 @@ class NoiseGenerator extends AudioWorkletProcessor {
         super();
         this.isPlaying = true;
         this.port.onmessage = (event) => {
-            console.log(event.data)
           this.isPlaying = event.data;
         };
     }

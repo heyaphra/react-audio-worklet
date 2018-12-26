@@ -33,14 +33,14 @@ class App extends Component {
   async loadModule(moduleName) {
     const { actx } = this;   
     try {
-      await actx.audioWorklet.addModule(
+      actx.audioWorklet.addModule(
         `worklet/${moduleName}.js`,
       );
       this.setState({moduleLoaded: true})
       console.log(`loaded module ${moduleName}`);
     } catch(e) {
       this.setState({moduleLoaded: false})
-      console.log(`Failed to load module ${moduleName}`);
+      console.log(`Failed to load module ${moduleName}`, e);
     }
   }
   /* The function below creates an AudioWorkletNode, connects it to our AudioContext,
@@ -116,7 +116,7 @@ class App extends Component {
       this.oscillator.stop(end);
     }
   /* The function below loads modules when selected from the dropdown menu. */
-  handleSelect(e) {
+  async handleSelect(e) {
     this.setState({selected: e.key, moduleLoaded: false});
     /* If no AudioContext, instantiate one and load modules */
     if(!this.actx) {
