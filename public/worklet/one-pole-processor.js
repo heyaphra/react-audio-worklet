@@ -22,7 +22,6 @@ class OnePoleProcessor extends AudioWorkletProcessor {
       super();
       this.isPlaying = true;
       this.port.onmessage = (event) => {
-        console.log(event.data);
         this.isPlaying = event.data;
       }; 
       this.updateCoefficientsWithFrequency_(250);

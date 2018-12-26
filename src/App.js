@@ -55,15 +55,25 @@ class App extends Component {
   }
   onePoleProcessor() {
     const { actx } = this;
+    const beginning = actx.currentTime;
+    const middle = actx.currentTime + 4;
+    const end = actx.currentTime + 8;
     this.oscillator = actx.createOscillator();
     this.filterNode = new AudioWorkletNode(actx, 'one-pole-processor');
     const frequencyParam = this.filterNode.parameters.get('frequency');
     this.oscillator.connect(this.filterNode).connect(actx.destination);
     this.oscillator.start();
+    this.oscillator.stop(end)
+    
     frequencyParam
-        .setValueAtTime(0.01, actx.currentTime)
-        .exponentialRampToValueAtTime(actx.sampleRate * 0.5, actx.currentTime + 4)
-        .exponentialRampToValueAtTime(0.01, actx.currentTime + 8);
+        .setValueAtTime(0.01, beginning)
+        .exponentialRampToValueAtTime(actx.sampleRate * 0.5, middle)
+        .exponentialRampToValueAtTime(0.01, end);
+
+    this.oscillator.onended = () => {
+        this.setState({isPlaying: false})
+    }
+
   }
   handleSelect(e) {
     this.setState({selected: e.key, moduleLoaded: false});
