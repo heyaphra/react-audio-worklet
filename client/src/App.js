@@ -12,7 +12,7 @@ class App extends Component {
       isPlaying: false /* Is a module currently playing? */
     }
     /* Menu is an overlay for the Ant Design dropdown component, passed in via props. */
-    this.menu = (
+    this.processorMenu = (
       <Menu onClick={(e) => this.handleSelect(e)} selectedKeys={[this.state.current]}>
         <Menu.Item key="Bypass Filter" custom='prop'>
           Bypass Filter
@@ -59,22 +59,18 @@ class App extends Component {
     parameter during playback. */
     onePoleProcessor() {
       const { actx } = this;
-
       const beginning = actx.currentTime;
       const middle = actx.currentTime + 4;
       const end = actx.currentTime + 8;
-
       this.filterNode = new AudioWorkletNode(actx, 'one-pole-processor');
       this.oscillator = actx.createOscillator();
       this.oscillator.connect(this.filterNode).connect(actx.destination);
       this.oscillator.start();
-
       const frequencyParam = this.filterNode.parameters.get('frequency');
       frequencyParam
           .setValueAtTime(0.01, beginning)
           .exponentialRampToValueAtTime(actx.sampleRate * 0.5, middle)
           .exponentialRampToValueAtTime(0.01, end);
-
       // This implementation of osc.onended is glitchy because the beginning, middle, and end must be managed in state.
       // this.oscillator.onended = () => {
       //     this.setState({ isPlaying: false })
@@ -116,93 +112,95 @@ class App extends Component {
       this.oscillator.stop(end);
     }
   /* The function below loads modules when selected from the dropdown menu. */
-  async handleSelect(e) {
-    this.setState({selected: e.key, moduleLoaded: false});
-    /* If no AudioContext, instantiate one and load modules */
-    if(!this.actx) {
-      try {
-        console.log('New context instantiated')
-        this.actx = await new (window.AudioContext || window.webkitAudioContext)();
-      } catch(e) {
-          console.log(`Sorry, but your browser doesn't support the Web Audio API!`, e);
+handleSelect(e) {
+    this.setState({selected: e.key, moduleLoaded: false}, async () => {
+      /* If no AudioContext, instantiate one and load modules */
+      if(!this.actx) {
+        try {
+          console.log('New context instantiated')
+          this.actx = await new (window.AudioContext || window.webkitAudioContext)();
+        } catch(e) {
+            console.log(`Sorry, but your browser doesn't support the Web Audio API!`, e);
+        }
+      } 
+      switch(e.key) {
+        default:
+          return;
+          break;
+        case 'Bypass Filter':
+          this.loadModule('bypass-processor')
+          break;
+        case 'One Pole Filter':
+          this.loadModule('one-pole-processor')
+          break;
+        case 'Noise':
+          this.loadModule('noise-generator');
+          break;
+        case 'Bitcrusher':
+          this.loadModule('bit-crusher-processor')
+          break;
       }
-    } 
-    switch(e.key) {
-      default:
-        return;
-        break;
-      case 'Bypass Filter':
-        this.loadModule('bypass-processor')
-        break;
-      case 'One Pole Filter':
-        this.loadModule('one-pole-processor')
-        break;
-      case 'Noise':
-        this.loadModule('noise-generator');
-        break;
-      case 'Bitcrusher':
-        this.loadModule('bit-crusher-processor')
-        break;
-    }
+    });
   }
   /* The function below handles the starting and stopping of the currently loaded module.  */
   handleClick() {
     const { state } = this;
     if(state.selected) {
-      this.setState({isPlaying: !state.isPlaying});    
+      this.setState({isPlaying: !state.isPlaying}, () => {
+        switch(state.selected) {
+          case 'Bypass Filter':
+              if(state.isPlaying) {
+                console.log(`stopping ${state.selected}`)
+                this.bypasserNode.port.postMessage(false)
+              } else {
+                console.log(`playing ${state.selected}`)
+                this.bypassProcessor();
+                this.bypasserNode.port.postMessage(true);          
+              }
+              break;
+          case 'One Pole Filter':
+            if(state.isPlaying) {
+              console.log(`stopping ${state.selected}`)
+              this.filterNode.port.postMessage(false);          
+            } else {
+              console.log(`playing ${state.selected}`)
+              this.onePoleProcessor();
+              this.filterNode.port.postMessage(true);          
+            }
+            break;
+            case 'Noise':
+              if(state.isPlaying) {
+                console.log(`stopping ${state.selected}`)
+                this.noiseGeneratorNode.port.postMessage(false);          
+              } else {
+                console.log(`playing ${state.selected}`)
+                this.noiseGenerator();
+                this.noiseGeneratorNode.port.postMessage(true);          
+              }
+            break;
+            case 'Bitcrusher':
+            if(state.isPlaying) {
+              console.log(`stopping ${state.selected}`)
+              this.bitCrusherNode.port.postMessage(false);          
+            } else {
+              console.log(`playing ${state.selected}`)
+              this.bitCrusherProcessor();
+              this.bitCrusherNode.port.postMessage(true);          
+            }
+            break;
+        }
+      });    
     }    
-    switch(state.selected) {
-      case 'Bypass Filter':
-          if(state.isPlaying) {
-            console.log(`stopping ${state.selected}`)
-            this.bypasserNode.port.postMessage(false)
-          } else {
-            console.log(`playing ${state.selected}`)
-            this.bypassProcessor();
-            this.bypasserNode.port.postMessage(true);          
-          }
-          break;
-      case 'One Pole Filter':
-        if(state.isPlaying) {
-          console.log(`stopping ${state.selected}`)
-          this.filterNode.port.postMessage(false);          
-        } else {
-          console.log(`playing ${state.selected}`)
-          this.onePoleProcessor();
-          this.filterNode.port.postMessage(true);          
-        }
-        break;
-        case 'Noise':
-          if(state.isPlaying) {
-            console.log(`stopping ${state.selected}`)
-            this.noiseGeneratorNode.port.postMessage(false);          
-          } else {
-            console.log(`playing ${state.selected}`)
-            this.noiseGenerator();
-            this.noiseGeneratorNode.port.postMessage(true);          
-          }
-        break;
-        case 'Bitcrusher':
-        if(state.isPlaying) {
-          console.log(`stopping ${state.selected}`)
-          this.bitCrusherNode.port.postMessage(false);          
-        } else {
-          console.log(`playing ${state.selected}`)
-          this.bitCrusherProcessor();
-          this.bitCrusherNode.port.postMessage(true);          
-        }
-        break;
-    }
   }
   render() {
-    const { state, menu } = this;
+    const { state, processorMenu } = this;
     return (
       <div className="App">
         <header className="App-header">
           <img src={logo} className="App-logo" alt="logo" />
           <span>React + AudioWorklet = ❤</span>
           <div style={{float:'left', width: '100%'}}>
-            <Dropdown overlay={menu} size='small'>
+            <Dropdown overlay={processorMenu} size='small'>
               <a className="ant-dropdown-link" href="#">
                 {state.selected ? state.selected : 'Select a module'} <Icon type="down" />
               </a>
