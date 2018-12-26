@@ -26,9 +26,6 @@ class App extends Component {
         <Menu.Item key="Bitcrusher">
           Bitcrusher
         </Menu.Item>   
-        <Menu.Item key="Message Port">
-          Message Port
-        </Menu.Item>  
       </Menu>
     );
   }
@@ -83,6 +80,19 @@ class App extends Component {
       //     this.setState({ isPlaying: false })
       // }
     }
+    noiseGenerator() {
+      const { actx } = this;
+      const modulator = new OscillatorNode(actx);
+      const modGain = new GainNode(actx);
+      this.noiseGenerator = new AudioWorkletNode(actx, 'noise-generator');
+      this.noiseGenerator.connect(actx.destination);
+      // Connect the oscillator to 'amplitude' AudioParam.
+      const paramAmp = this.noiseGenerator.parameters.get('amplitude');
+      modulator.connect(modGain).connect(paramAmp);
+      modulator.frequency.value = 0.5;
+      modGain.gain.value = 0.75;
+      modulator.start();
+    }
     bitCrusherProcessor() {
       const { actx } = this;
       this.oscillator = actx.createOscillator();
@@ -124,6 +134,9 @@ class App extends Component {
       case 'One Pole Filter':
         this.loadModule('one-pole-processor')
         break;
+      case 'Noise':
+        this.loadModule('noise-generator');
+        break;
       case 'Bitcrusher':
         this.loadModule('bit-crusher-processor')
         break;
@@ -155,6 +168,16 @@ class App extends Component {
           this.onePoleProcessor();
           this.filterNode.port.postMessage(true);          
         }
+        break;
+        case 'Noise':
+          if(state.isPlaying) {
+            console.log(`stopping ${state.selected}`)
+            this.noiseGenerator.port.postMessage(false);          
+          } else {
+            console.log(`playing ${state.selected}`)
+            this.noiseGenerator();
+            this.noiseGenerator.port.postMessage(true);          
+          }
         break;
         case 'Bitcrusher':
         if(state.isPlaying) {
