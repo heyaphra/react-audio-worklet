@@ -113,6 +113,7 @@ class App extends Component {
     }
   /* The function below loads modules when selected from the dropdown menu. */
 handleSelect(e) {
+    if(this.state.isPlaying) return;
     this.setState({selected: e.key, moduleLoaded: false}, async () => {
       /* If no AudioContext, instantiate one and load modules */
       if(!this.actx) {
