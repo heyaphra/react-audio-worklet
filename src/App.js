@@ -9,7 +9,7 @@ class App extends Component {
   constructor() {
     super();
     this.state = {
-      value: ''
+      current: 'Select a module'
     }
     this.actx = new AudioContext();
     this.handleChange = this.handleChange.bind(this);
@@ -22,20 +22,20 @@ class App extends Component {
   }
   render() {
     const menu = (
-      <Menu onClick={(e) => this.handleChange(e)}>
-        <Menu.Item key="bypass">
+      <Menu onClick={(e) => this.handleChange(e)} selectedKeys={[this.state.current]}>
+        <Menu.Item key="Bypass Filter">
           Bypass Filter
         </Menu.Item>
-        <Menu.Item key="filter">
+        <Menu.Item key="One Pole Filter">
           One Pole Filter
         </Menu.Item>
-        <Menu.Item key="noise">
+        <Menu.Item key="Noise">
           Noise
         </Menu.Item>
-        <Menu.Item key="bitcrusher">
+        <Menu.Item key="Bitcrusher">
           Bitcrusher
         </Menu.Item>   
-        <Menu.Item key="messageport">
+        <Menu.Item key="Message Port">
           Message Port
         </Menu.Item>  
       </Menu>
@@ -44,11 +44,11 @@ class App extends Component {
       <div className="App">
         <header className="App-header">
           <img src={logo} className="App-logo" alt="logo" />
-          React + AudioWorklet = ❤
+          <span>React + AudioWorklet = ❤</span>
           <div style={{float:'left', width: '100%'}}>
             <Dropdown overlay={menu} size='small'>
               <a className="ant-dropdown-link" href="#">
-                Select a module <Icon type="down" />
+                {this.state.current} <Icon type="down" />
               </a>
             </Dropdown>
             <Button ghost style={{marginLeft:'1%'}}>Start</Button>
