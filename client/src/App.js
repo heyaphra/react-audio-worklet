@@ -45,7 +45,7 @@ class App extends Component {
   }
   /* The function below creates an AudioWorkletNode, connects it to our AudioContext,
      connects an oscillator to it, and starts the oscillator */
-  bypassProcessor() {
+  bypasser() {
     const { actx } = this;
     this.bypasserNode = new AudioWorkletNode(actx, 'bypass-processor');
     const oscillator  = actx.createOscillator();
@@ -57,7 +57,7 @@ class App extends Component {
     It creates a new AudioWorkletNode and a new oscillator, connects the new oscillator to the 
     node, starts the oscillator, schedules it's termination, and fiddles with the node's frequency
     parameter during playback. */
-    onePoleProcessor() {
+    onePoleFilter() {
       const { actx } = this;
       const beginning = actx.currentTime;
       const middle = actx.currentTime + 4;
@@ -89,7 +89,7 @@ class App extends Component {
       modGain.gain.value = 0.75;
       modulator.start();
     }
-    bitCrusherProcessor() {
+    bitCrusher() {
       const { actx } = this;
       const oscillator = actx.createOscillator();
       this.bitCrusherNode = new AudioWorkletNode(actx, 'bit-crusher-processor');
@@ -155,7 +155,7 @@ handleSelect(e) {
                 this.bypasserNode.port.postMessage(false)
               } else {
                 console.log(`playing ${state.selected}`)
-                this.bypassProcessor();
+                this.bypasser();
                 this.bypasserNode.port.postMessage(true);          
               }
               break;
@@ -165,7 +165,7 @@ handleSelect(e) {
               this.filterNode.port.postMessage(false);          
             } else {
               console.log(`playing ${state.selected}`)
-              this.onePoleProcessor();
+              this.onePoleFilter();
               this.filterNode.port.postMessage(true);          
             }
             break;
@@ -185,7 +185,7 @@ handleSelect(e) {
               this.bitCrusherNode.port.postMessage(false);          
             } else {
               console.log(`playing ${state.selected}`)
-              this.bitCrusherProcessor();
+              this.bitCrusher();
               this.bitCrusherNode.port.postMessage(true);          
             }
             break;
