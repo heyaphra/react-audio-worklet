@@ -52,7 +52,7 @@ class App extends Component {
     this.oscillator.connect(this.bypasserNode).connect(actx.destination);
     this.oscillator.start();
   }
-/* The example below initially demonstrated a one-off scheduled event. I've modified it to play
+  /* The example below initially demonstrated a one-off scheduled event. I've modified it to play
     based on the AudioContext's currentTime so that it can be replayed at the press of a button. 
     It creates a new AudioWorkletNode and a new oscillator, connects the new oscillator to the 
     node, starts the oscillator, schedules it's termination, and fiddles with the node's frequency
@@ -116,13 +116,13 @@ class App extends Component {
       this.oscillator.stop(end);
     }
   /* The function below loads modules when selected from the dropdown menu. */
-  handleSelect(e) {
+  async handleSelect(e) {
     this.setState({selected: e.key, moduleLoaded: false});
     /* If no AudioContext, instantiate one and load modules */
     if(!this.actx) {
       try {
         console.log('New context instantiated')
-        this.actx = new (window.AudioContext || window.webkitAudioContext)();
+        this.actx = await new (window.AudioContext || window.webkitAudioContext)();
       } catch(e) {
           console.log(`Sorry, but your browser doesn't support the Web Audio API!`, e);
       }

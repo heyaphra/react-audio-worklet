@@ -8,7 +8,7 @@
  * @class OnePoleProcessor
  * @extends window.AudioWorkletProcessor
  */
-class OnePoleProcessor extends AudioWorkletProcessor {
+export default class OnePoleProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
       return [{
         name: 'frequency',
