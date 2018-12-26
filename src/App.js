@@ -3,16 +3,16 @@ import logo from './logo.svg';
 import './App.css';
 import { Menu, Dropdown, Icon, Button } from 'antd';
 
-
-
 class App extends Component {
   constructor() {
     super();
     this.state = {
-      selected: null,
-      moduleLoaded: false,
-      isPlaying: false
+      selected: null, /* Which module has been selected from the menu */
+      moduleLoaded: false, /* Has the current selected module finished loading? */
+      isPlaying: false /* Is a module currently playing? */
     }
+
+    /* Menu is an overlay for the Ant Design dropdown component, passed in via props. */
     this.menu = (
       <Menu onClick={(e) => this.handleSelect(e)} selectedKeys={[this.state.current]}>
         <Menu.Item key="Bypass Filter" custom='prop'>
@@ -33,6 +33,8 @@ class App extends Component {
       </Menu>
     );
   }
+
+  /* The function below takes module name as an arg and adds it to the AudioContext's audioWorklet */
   async loadModule(moduleName) {
     const { actx } = this;   
     try {
@@ -42,10 +44,13 @@ class App extends Component {
       this.setState({moduleLoaded: true})
       console.log(`loaded module ${moduleName}`);
     } catch(e) {
-      console.log(`Failed to load module ${moduleName}`);
       this.setState({moduleLoaded: false})
+      console.log(`Failed to load module ${moduleName}`);
     }
   }
+
+  /* The function below creates an AudioWorkletNode, connects it to our AudioContext,
+     connects an oscillator to it, and starts the oscillator */
   bypassProcessor() {
     const { actx } = this;
     this.bypasserNode = new AudioWorkletNode(actx, 'bypass-processor');
@@ -53,28 +58,38 @@ class App extends Component {
     this.oscillator.connect(this.bypasserNode).connect(actx.destination);
     this.oscillator.start();
   }
+
+/* The example below initially demonstrated a one-off scheduled event. I've modified it to play
+    based on the AudioContext's currentTime so that it can be replayed at the press of a button. 
+    It creates a new AudioWorkletNode and a new oscillator, connects the new oscillator to the 
+    node, starts the oscillator, schedules it's termination, and fiddles with the node's frequency
+    parameter during playback. */
   onePoleProcessor() {
     const { actx } = this;
+
     const beginning = actx.currentTime;
     const middle = actx.currentTime + 4;
     const end = actx.currentTime + 8;
-    this.oscillator = actx.createOscillator();
+
     this.filterNode = new AudioWorkletNode(actx, 'one-pole-processor');
-    const frequencyParam = this.filterNode.parameters.get('frequency');
+
+    this.oscillator = actx.createOscillator();
     this.oscillator.connect(this.filterNode).connect(actx.destination);
     this.oscillator.start();
     this.oscillator.stop(end)
+    this.oscillator.onended = () => {
+      this.setState({ isPlaying: false })
+    }
     
+    const frequencyParam = this.filterNode.parameters.get('frequency');
     frequencyParam
         .setValueAtTime(0.01, beginning)
         .exponentialRampToValueAtTime(actx.sampleRate * 0.5, middle)
         .exponentialRampToValueAtTime(0.01, end);
 
-    this.oscillator.onended = () => {
-        this.setState({isPlaying: false})
-    }
-
   }
+  
+  /* The function below loads modules when selected from the dropdown menu. */
   handleSelect(e) {
     this.setState({selected: e.key, moduleLoaded: false});
 
@@ -100,50 +115,38 @@ class App extends Component {
       break;
     }
   }
-  async handleClick() {
-    const { state } = this;
-    console.log(this.state)
 
-    /* isPlaying is true only if a module has been selected */
+  /* The function below handles the starting and stopping of the currently loaded module.  */
+  handleClick() {
+    const { state } = this;
     if(state.selected) {
       this.setState({isPlaying: !state.isPlaying});    
     }    
 
     switch(state.selected) {
       case 'Bypass Filter':
+          if(state.isPlaying) {
+            console.log(`stopping ${state.selected}`)
+            this.bypasserNode.port.postMessage(false)
+          } else {
+            console.log(`playing ${state.selected}`)
+            this.bypassProcessor();
+            this.bypasserNode.port.postMessage(true);          
+          }
+        break;
+      case 'One Pole Filter':
         if(state.isPlaying) {
           console.log(`stopping ${state.selected}`)
-          this.bypasserNode.port.postMessage(false)
+          this.filterNode.port.postMessage(false);          
         } else {
           console.log(`playing ${state.selected}`)
-          this.bypassProcessor();
-          this.bypasserNode.port.postMessage(true);          
+          this.onePoleProcessor();
+          this.filterNode.port.postMessage(true);          
         }
       break;
-      case 'One Pole Filter':
-      if(state.isPlaying) {
-        console.log(`stopping ${state.selected}`)
-        this.filterNode.port.postMessage(false);          
-      } else {
-        console.log(`playing ${state.selected}`)
-        this.onePoleProcessor();
-        this.filterNode.port.postMessage(true);          
-      }
-    break;
-
     }
-
-      // if(state.isPlaying) {
-      //   this.filterNode.port.postMessage(false);          
-      // } else {
-      //   this.onePoleProcessor();
-      //   this.filterNode.port.postMessage(true);          
-      // }
-    
-
-
-
   }
+
   render() {
     const { state, menu } = this;
     return (
