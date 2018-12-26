@@ -33,14 +33,14 @@ class App extends Component {
   async loadModule(moduleName) {
     const { actx } = this;   
     try {
-      actx.audioWorklet.addModule(
+      await actx.audioWorklet.addModule(
         `worklet/${moduleName}.js`,
       );
       this.setState({moduleLoaded: true})
       console.log(`loaded module ${moduleName}`);
     } catch(e) {
       this.setState({moduleLoaded: false})
-      console.log(`Failed to load module ${moduleName}`, e);
+      console.log(`Failed to load module ${moduleName}`);
     }
   }
   /* The function below creates an AudioWorkletNode, connects it to our AudioContext,
@@ -116,13 +116,13 @@ class App extends Component {
       this.oscillator.stop(end);
     }
   /* The function below loads modules when selected from the dropdown menu. */
-  async handleSelect(e) {
+  handleSelect(e) {
     this.setState({selected: e.key, moduleLoaded: false});
     /* If no AudioContext, instantiate one and load modules */
     if(!this.actx) {
       try {
         console.log('New context instantiated')
-        this.actx = await new (window.AudioContext || window.webkitAudioContext)();
+        this.actx = new (window.AudioContext || window.webkitAudioContext)();
       } catch(e) {
           console.log(`Sorry, but your browser doesn't support the Web Audio API!`, e);
       }

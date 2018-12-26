@@ -6,7 +6,7 @@
  * A simple One pole filter.
  *
  * @class OnePoleProcessor
- * @extends window.AudioWorkletProcessor
+ * @extends AudioWorkletProcessor
  */
 class OnePoleProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
