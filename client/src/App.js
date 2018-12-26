@@ -125,9 +125,6 @@ handleSelect(e) {
         }
       } 
       switch(e.key) {
-        default:
-          return;
-          break;
         case 'Bypass Filter':
           this.loadModule('bypass-processor')
           break;
