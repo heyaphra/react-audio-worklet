@@ -6,9 +6,9 @@
  * A simple One pole filter.
  *
  * @class OnePoleProcessor
- * @extends AudioWorkletProcessor
+ * @extends window.AudioWorkletProcessor
  */
-class OnePoleProcessor extends AudioWorkletProcessor {
+export default class OnePoleProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
       return [{
         name: 'frequency',

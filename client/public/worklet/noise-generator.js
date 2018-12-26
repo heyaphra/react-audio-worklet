@@ -19,7 +19,7 @@
  * @class NoiseGenerator
  * @extends AudioWorkletProcessor
  */
-class NoiseGenerator extends AudioWorkletProcessor {
+export default class NoiseGenerator extends AudioWorkletProcessor {
     constructor() {
         super();
         this.isPlaying = true;
