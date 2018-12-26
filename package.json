@@ -5,18 +5,14 @@
   "dependencies": {
     "antd": "^3.11.6",
     "react": "^16.7.0",
-    "react-bootstrap": "^0.32.4",
     "react-dom": "^16.7.0",
-    "react-scripts": "2.1.2",
-    "semantic-ui-css": "^2.4.1"
+    "react-scripts": "2.1.2"
   },
   "scripts": {
-    "dev": "react-scripts start",
-    "start": "serve -s build",
+    "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "heroku-postbuild": "npm run build"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": "react-app"
