@@ -84,10 +84,10 @@ class App extends Component {
       const { actx } = this;
       const modulator = new OscillatorNode(actx);
       const modGain = new GainNode(actx);
-      this.noiseGenerator = new AudioWorkletNode(actx, 'noise-generator');
-      this.noiseGenerator.connect(actx.destination);
+      this.noiseGeneratorNode = new AudioWorkletNode(actx, 'noise-generator');
+      this.noiseGeneratorNode.connect(actx.destination);
       // Connect the oscillator to 'amplitude' AudioParam.
-      const paramAmp = this.noiseGenerator.parameters.get('amplitude');
+      const paramAmp = this.noiseGeneratorNode.parameters.get('amplitude');
       modulator.connect(modGain).connect(paramAmp);
       modulator.frequency.value = 0.5;
       modGain.gain.value = 0.75;
@@ -175,11 +175,11 @@ class App extends Component {
         case 'Noise':
           if(state.isPlaying) {
             console.log(`stopping ${state.selected}`)
-            this.noiseGenerator.port.postMessage(false);          
+            this.noiseGeneratorNode.port.postMessage(false);          
           } else {
             console.log(`playing ${state.selected}`)
             this.noiseGenerator();
-            this.noiseGenerator.port.postMessage(true);          
+            this.noiseGeneratorNode.port.postMessage(true);          
           }
         break;
         case 'Bitcrusher':
