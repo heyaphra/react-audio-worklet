@@ -24,7 +24,6 @@ class App {
     constructor() {
         this.port = process.env.PORT || 3090;
         this.server = http.createServer(app);
-        this.initDb();
         this.initMiddleware();
         this.run();
     }
