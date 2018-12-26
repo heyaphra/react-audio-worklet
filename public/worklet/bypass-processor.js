@@ -7,10 +7,19 @@
 
 class BypassProcessor extends AudioWorkletProcessor {
 
-    // When constructor() undefined, the default constructor will be
-    // implicitly used.
+    constructor() {
+      super();
+      this.isPlaying = true;
+      this.port.onmessage = (event) => {
+        console.log(event.data);
+        this.isPlaying = event.data;
+      };  
+    }
   
     process(inputs, outputs) {
+      if(!this.isPlaying) {
+        return;
+      }
       // By default, the node has single input and output.
       const input = inputs[0];
       const output = outputs[0];
@@ -19,7 +28,7 @@ class BypassProcessor extends AudioWorkletProcessor {
         output[channel].set(input[channel]);
       }
   
-      return true;
+      return this.isPlaying;
     }
   }
   

@@ -10,7 +10,7 @@ class App extends Component {
     super();
     this.state = {
       selected: null,
-      modulesLoaded: false,
+      moduleLoaded: false,
       isPlaying: false
     }
     this.menu = (
@@ -32,68 +32,106 @@ class App extends Component {
         </Menu.Item>  
       </Menu>
     );
-    this.bypassProcessor = this.bypassProcessor.bind(this);
-    this.handleSelect = this.handleSelect.bind(this);
-    this.handleClick = this.handleClick.bind(this);
-
   }
-  async loadModules() {
-    const { actx } = this;    
-    await actx.audioWorklet.addModule(
-        `${process.env.PUBLIC_URL}/worklet/bypass-processor.js`
-    );
-    this.setState({modulesLoaded: true})
-    console.log('loaded modules!')
+  async loadModule(moduleName) {
+    const { actx } = this;   
+    try {
+      await actx.audioWorklet.addModule(
+        `${process.env.PUBLIC_URL}/worklet/${moduleName}.js`,
+      );
+      this.setState({moduleLoaded: true})
+      console.log(`loaded module ${moduleName}`);
+    } catch(e) {
+      console.log(`Failed to load module ${moduleName}`);
+      this.setState({moduleLoaded: false})
+    }
   }
   bypassProcessor() {
     const { actx } = this;
-    const bypasser = new AudioWorkletNode(actx, 'bypass-processor');
-    this.oscillator = new OscillatorNode(actx);                
-    this.oscillator.connect(bypasser).connect(actx.destination);
+    this.bypasserNode = new AudioWorkletNode(actx, 'bypass-processor');
+    this.oscillator = actx.createOscillator();
+    this.oscillator.connect(this.bypasserNode).connect(actx.destination);
     this.oscillator.start();
   }
-  handleSelect(e) {
-    this.setState({selected: e.key});
+  onePoleProcessor() {
+    const { actx } = this;
+    this.oscillator = actx.createOscillator();
+    this.filterNode = new AudioWorkletNode(actx, 'one-pole-processor');
+    const frequencyParam = this.filterNode.parameters.get('frequency');
+    this.oscillator.connect(this.filterNode).connect(actx.destination);
+    this.oscillator.start();
+    frequencyParam
+        .setValueAtTime(0.01, actx.currentTime)
+        .exponentialRampToValueAtTime(actx.sampleRate * 0.5, actx.currentTime + 4)
+        .exponentialRampToValueAtTime(0.01, actx.currentTime + 8);
   }
-  async handleClick() {
-    const { state } = this;
+  handleSelect(e) {
+    this.setState({selected: e.key, moduleLoaded: false});
 
-    if(state.selected) {
-      this.setState({isPlaying: !state.isPlaying});    
-    }    
-    
+    /* If no AudioContext, instantiate one and load modules */
     if(!this.actx) {
       try {
         console.log('New context instantiated')
         this.actx = new (window.AudioContext || window.webkitAudioContext)();
-        await this.loadModules();
       } catch(e) {
-        console.log(`Sorry, but your browser doesn't support the Web Audio API!`);
+          console.log(`Sorry, but your browser doesn't support the Web Audio API!`, e);
       }
-    }
+    } 
 
-    switch (state.selected) {
+    switch(e.key) {
+      default:
+        return;
+      break;
+      case 'Bypass Filter':
+        this.loadModule('bypass-processor')
+      break;
+      case 'One Pole Filter':
+        this.loadModule('one-pole-processor')
+      break;
+    }
+  }
+  async handleClick() {
+    const { state } = this;
+    console.log(this.state)
+
+    /* isPlaying is true only if a module has been selected */
+    if(state.selected) {
+      this.setState({isPlaying: !state.isPlaying});    
+    }    
+
+    switch(state.selected) {
       case 'Bypass Filter':
         if(state.isPlaying) {
-          this.oscillator.stop();
+          console.log(`stopping ${state.selected}`)
+          this.bypasserNode.port.postMessage(false)
         } else {
+          console.log(`playing ${state.selected}`)
           this.bypassProcessor();
+          this.bypasserNode.port.postMessage(true);          
         }
       break;
       case 'One Pole Filter':
-        console.log('pole');
-      break;
-      case 'Noise':
-        console.log('noise')
-      break;
-      case 'Bitcrusher':
-        console.log('crushit');
-      break;
-      case 'Message Port':
-        console.log('postin')
-      break;
+      if(state.isPlaying) {
+        console.log(`stopping ${state.selected}`)
+        this.filterNode.port.postMessage(false);          
+      } else {
+        console.log(`playing ${state.selected}`)
+        this.onePoleProcessor();
+        this.filterNode.port.postMessage(true);          
+      }
+    break;
+
     }
+
+      // if(state.isPlaying) {
+      //   this.filterNode.port.postMessage(false);          
+      // } else {
+      //   this.onePoleProcessor();
+      //   this.filterNode.port.postMessage(true);          
+      // }
     
+
+
 
   }
   render() {
