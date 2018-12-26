@@ -179,7 +179,7 @@ class App extends Component {
           } else {
             console.log(`playing ${state.selected}`)
             this.noiseGenerator();
-            this.noiseGeneratorNode.port.postMessage(true);          
+            this.noiseGeneratorNode5.port.postMessage(true);          
           }
         break;
         case 'Bitcrusher':
