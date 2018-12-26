@@ -83,6 +83,25 @@ class App extends Component {
       //     this.setState({ isPlaying: false })
       // }
     }
+    bitCrusherProcessor() {
+      const { actx } = this;
+      this.oscillator = actx.createOscillator();
+      this.bitCrusherNode = new AudioWorkletNode(actx, 'bit-crusher-processor');
+      const paramBitDepth = this.bitCrusherNode.parameters.get('bitDepth');
+      const paramReduction = this.bitCrusherNode.parameters.get('frequencyReduction');
+      this.oscillator.type = 'sawtooth';
+      this.oscillator.frequency.value = 5000;
+      paramBitDepth.setValueAtTime(1, 0);
+      this.oscillator.connect(this.bitCrusherNode).connect(actx.destination);
+      // |frequencyReduction| parameters will be automated and changing over
+      // time. Thus its parameter array will have 128 values.
+      paramReduction.setValueAtTime(0.01, 0);
+      paramReduction.linearRampToValueAtTime(0.1, 4);
+      paramReduction.exponentialRampToValueAtTime(0.01, 8);
+      // Play the tone for 8 seconds.
+      this.oscillator.start();
+      this.oscillator.stop(8);
+    }
   /* The function below loads modules when selected from the dropdown menu. */
   handleSelect(e) {
     this.setState({selected: e.key, moduleLoaded: false});
@@ -104,6 +123,9 @@ class App extends Component {
         break;
       case 'One Pole Filter':
         this.loadModule('one-pole-processor')
+        break;
+      case 'Bitcrusher':
+        this.loadModule('bit-crusher-processor')
         break;
     }
   }
@@ -132,6 +154,16 @@ class App extends Component {
           console.log(`playing ${state.selected}`)
           this.onePoleProcessor();
           this.filterNode.port.postMessage(true);          
+        }
+        break;
+        case 'Bitcrusher':
+        if(state.isPlaying) {
+          console.log(`stopping ${state.selected}`)
+          this.bitCrusherNode.port.postMessage(false);          
+        } else {
+          console.log(`playing ${state.selected}`)
+          this.bitCrusherProcessor();
+          this.bitCrusherNode.port.postMessage(true);          
         }
         break;
     }
