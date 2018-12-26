@@ -1,6 +1,4 @@
-// Test insert to DB
-const seedDb = require('./models/seed').seedDb;
-//
+
 // Initialize Express
 const express = require('express');
 const app = express();
@@ -12,8 +10,6 @@ const router = require('./router');
 const http = require('http');
 const path = require('path');
 
-// Import Mongoose
-const mongoose = require('mongoose');
 
 // Import Middleware
 const morgan = require('morgan');  // Helps us develop and debug locally
@@ -26,17 +22,6 @@ class App {
         this.server = http.createServer(app);
         this.initMiddleware();
         this.run();
-    }
-    initDb() {
-        try {
-            this.db = mongoose.connect(
-                process.env.MONGODB_URI || 'your_local_mongo_uri_here', 
-                { useNewUrlParser: true } // Helps us avoid deprecation errors.
-            );
-            console.log('Successfully connected to database.')
-        } catch (error) {
-            console.log('Failed to connect to MongoDB.', error)
-        }
     }
     initMiddleware() {
         app.use(cors());

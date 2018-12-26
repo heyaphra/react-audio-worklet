@@ -1,5 +1,4 @@
 const path = require('path');
-const db = require('./controllers/controller');
 
 module.exports = function(app) {
     // Ensures your react app is being served at all times
