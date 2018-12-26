@@ -34,7 +34,7 @@ class App extends Component {
     const { actx } = this;   
     try {
       await actx.audioWorklet.addModule(
-        `${process.env.PUBLIC_URL}/worklet/${moduleName}.js`,
+        `worklet/${moduleName}.js`,
       );
       this.setState({moduleLoaded: true})
       console.log(`loaded module ${moduleName}`);
