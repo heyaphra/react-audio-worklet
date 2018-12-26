@@ -11,7 +11,6 @@ class App extends Component {
       moduleLoaded: false, /* Has the current selected module finished loading? */
       isPlaying: false /* Is a module currently playing? */
     }
-
     /* Menu is an overlay for the Ant Design dropdown component, passed in via props. */
     this.menu = (
       <Menu onClick={(e) => this.handleSelect(e)} selectedKeys={[this.state.current]}>
@@ -33,7 +32,6 @@ class App extends Component {
       </Menu>
     );
   }
-
   /* The function below takes module name as an arg and adds it to the AudioContext's audioWorklet */
   async loadModule(moduleName) {
     const { actx } = this;   
@@ -48,7 +46,6 @@ class App extends Component {
       console.log(`Failed to load module ${moduleName}`);
     }
   }
-
   /* The function below creates an AudioWorkletNode, connects it to our AudioContext,
      connects an oscillator to it, and starts the oscillator */
   bypassProcessor() {
@@ -58,7 +55,6 @@ class App extends Component {
     this.oscillator.connect(this.bypasserNode).connect(actx.destination);
     this.oscillator.start();
   }
-
 /* The example below initially demonstrated a one-off scheduled event. I've modified it to play
     based on the AudioContext's currentTime so that it can be replayed at the press of a button. 
     It creates a new AudioWorkletNode and a new oscillator, connects the new oscillator to the 
@@ -66,13 +62,10 @@ class App extends Component {
     parameter during playback. */
   onePoleProcessor() {
     const { actx } = this;
-
     const beginning = actx.currentTime;
     const middle = actx.currentTime + 4;
     const end = actx.currentTime + 8;
-
     this.filterNode = new AudioWorkletNode(actx, 'one-pole-processor');
-
     this.oscillator = actx.createOscillator();
     this.oscillator.connect(this.filterNode).connect(actx.destination);
     this.oscillator.start();
@@ -80,19 +73,15 @@ class App extends Component {
     this.oscillator.onended = () => {
       this.setState({ isPlaying: false })
     }
-    
     const frequencyParam = this.filterNode.parameters.get('frequency');
     frequencyParam
         .setValueAtTime(0.01, beginning)
         .exponentialRampToValueAtTime(actx.sampleRate * 0.5, middle)
         .exponentialRampToValueAtTime(0.01, end);
-
   }
-  
   /* The function below loads modules when selected from the dropdown menu. */
   handleSelect(e) {
     this.setState({selected: e.key, moduleLoaded: false});
-
     /* If no AudioContext, instantiate one and load modules */
     if(!this.actx) {
       try {
@@ -102,27 +91,24 @@ class App extends Component {
           console.log(`Sorry, but your browser doesn't support the Web Audio API!`, e);
       }
     } 
-
     switch(e.key) {
       default:
         return;
-      break;
+        break;
       case 'Bypass Filter':
         this.loadModule('bypass-processor')
-      break;
+        break;
       case 'One Pole Filter':
         this.loadModule('one-pole-processor')
-      break;
+        break;
     }
   }
-
   /* The function below handles the starting and stopping of the currently loaded module.  */
   handleClick() {
     const { state } = this;
     if(state.selected) {
       this.setState({isPlaying: !state.isPlaying});    
     }    
-
     switch(state.selected) {
       case 'Bypass Filter':
           if(state.isPlaying) {
@@ -133,7 +119,7 @@ class App extends Component {
             this.bypassProcessor();
             this.bypasserNode.port.postMessage(true);          
           }
-        break;
+          break;
       case 'One Pole Filter':
         if(state.isPlaying) {
           console.log(`stopping ${state.selected}`)
@@ -143,10 +129,9 @@ class App extends Component {
           this.onePoleProcessor();
           this.filterNode.port.postMessage(true);          
         }
-      break;
+        break;
     }
   }
-
   render() {
     const { state, menu } = this;
     return (
