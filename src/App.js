@@ -60,25 +60,28 @@ class App extends Component {
     It creates a new AudioWorkletNode and a new oscillator, connects the new oscillator to the 
     node, starts the oscillator, schedules it's termination, and fiddles with the node's frequency
     parameter during playback. */
-  onePoleProcessor() {
-    const { actx } = this;
-    const beginning = actx.currentTime;
-    const middle = actx.currentTime + 4;
-    const end = actx.currentTime + 8;
-    this.filterNode = new AudioWorkletNode(actx, 'one-pole-processor');
-    this.oscillator = actx.createOscillator();
-    this.oscillator.connect(this.filterNode).connect(actx.destination);
-    this.oscillator.start();
-    this.oscillator.stop(end)
-    this.oscillator.onended = () => {
-      this.setState({ isPlaying: false })
+    onePoleProcessor() {
+      const { actx } = this;
+      const beginning = actx.currentTime;
+      const middle = actx.currentTime + 4;
+      const end = actx.currentTime + 8;
+
+      this.filterNode = new AudioWorkletNode(actx, 'one-pole-processor');
+      this.oscillator = actx.createOscillator();
+      this.oscillator.connect(this.filterNode).connect(actx.destination);
+      this.oscillator.start();
+      this.oscillator.stop(end)
+
+      const frequencyParam = this.filterNode.parameters.get('frequency');
+      frequencyParam
+          .setValueAtTime(0.01, beginning)
+          .exponentialRampToValueAtTime(actx.sampleRate * 0.5, middle)
+          .exponentialRampToValueAtTime(0.01, end);
+          
+      this.oscillator.onended = () => {
+          this.setState({ isPlaying: false })
+      }
     }
-    const frequencyParam = this.filterNode.parameters.get('frequency');
-    frequencyParam
-        .setValueAtTime(0.01, beginning)
-        .exponentialRampToValueAtTime(actx.sampleRate * 0.5, middle)
-        .exponentialRampToValueAtTime(0.01, end);
-  }
   /* The function below loads modules when selected from the dropdown menu. */
   handleSelect(e) {
     this.setState({selected: e.key, moduleLoaded: false});
