@@ -122,7 +122,7 @@ class App extends Component {
     if(!this.actx) {
       try {
         console.log('New context instantiated')
-        this.actx = new (window.AudioContext || window.webkitAudioContext)();
+        this.actx = await new (window.AudioContext || window.webkitAudioContext)();
       } catch(e) {
           console.log(`Sorry, but your browser doesn't support the Web Audio API!`, e);
       }
