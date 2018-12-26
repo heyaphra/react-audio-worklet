@@ -103,14 +103,17 @@ class App extends Component {
       this.oscillator.frequency.value = 5000;
       paramBitDepth.setValueAtTime(1, 0);
       this.oscillator.connect(this.bitCrusherNode).connect(actx.destination);
+      const beginning = actx.currentTime;
+      const middle = actx.currentTime + 4;
+      const end = actx.currentTime + 8;
       // |frequencyReduction| parameters will be automated and changing over
       // time. Thus its parameter array will have 128 values.
-      paramReduction.setValueAtTime(0.01, 0);
-      paramReduction.linearRampToValueAtTime(0.1, 4);
-      paramReduction.exponentialRampToValueAtTime(0.01, 8);
+      paramReduction.setValueAtTime(0.01, beginning);
+      paramReduction.linearRampToValueAtTime(0.1, middle);
+      paramReduction.exponentialRampToValueAtTime(0.01, end);
       // Play the tone for 8 seconds.
       this.oscillator.start();
-      this.oscillator.stop(8);
+      this.oscillator.stop(end);
     }
   /* The function below loads modules when selected from the dropdown menu. */
   handleSelect(e) {
