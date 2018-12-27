@@ -8,11 +8,11 @@ class App extends Component {
   constructor() {
     super();
     this.state = {
-      selected: null, /* Which module has been selected from the menu? */
-      isPlaying: false, /* Is audio currently playing? */
-      processor: null, /* Current AudioWorkletProcessor */
-      node: null, /* Current AudioWorkletNode */
-      moduleLoaded: false, /* Has the selected AudioWorkletProcessor finished loading? */
+      selected: null, /* Which menu item has been selected? (String) */
+      isPlaying: false, /* Is audio currently playing? (Boolean) */
+      processor: null, /* Current AudioWorkletProcessor (String) */
+      node: null, /* Current AudioWorkletNode (AudioWorkletNode)*/
+      moduleLoaded: false, /* Has the selected AudioWorkletProcessor finished loading? (Boolean)*/
     }
   }
   /* The function below takes module name as an arg and adds it to the AudioContext's audioWorklet */
