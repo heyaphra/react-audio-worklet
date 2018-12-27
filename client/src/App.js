@@ -15,7 +15,7 @@ class App extends Component {
       moduleLoaded: false, /* Has the selected AudioWorkletProcessor finished loading? (Boolean)*/
     }
   }
-  /* The function below takes module name as an arg and adds it to the AudioContext's audioWorklet */
+  /* loadModule: given a module's name, adds it to the audioWorklet */
   async loadModule(moduleName) {
     const { actx } = this;   
     try {
@@ -29,7 +29,8 @@ class App extends Component {
       console.log(`Failed to load module ${moduleName}`);
     }
   }
-  /* The function below loads modules when selected from the dropdown menu. */
+  /* handleSelect: loads modules when selected from dropdown menu.
+     It also handles instantiating an AudioContext since it's likely the first user gesture.*/
   handleSelect(name, processor) {
     if(this.state.isPlaying) return;
     this.setState({selected: name, processor, moduleLoaded: false}, () => {
@@ -44,6 +45,7 @@ class App extends Component {
       this.loadModule(processor)
     });
   }
+  /* toggleNode: starts and stops audio by sending a boolean via the AudioWorkletProcessor's message port.*/
   toggleNode(node, isPlaying, cb){
     if(isPlaying) {
       console.log(`stopping ${this.state.selected}`)
