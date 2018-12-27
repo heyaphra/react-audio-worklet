@@ -12,7 +12,7 @@ class App extends Component {
       isPlaying: false /* Is a module currently playing? */
     }
     /* Menu is an overlay for the Ant Design dropdown component, passed in via props. */
-    this.processorMenu = (
+    this.menu = (
       <Menu onClick={(e) => this.handleSelect(e)} selectedKeys={[this.state.current]}>
         <Menu.Item key="Bypass Filter" custom='prop'>
           Bypass Filter
@@ -48,9 +48,9 @@ class App extends Component {
   bypasser() {
     const { actx } = this;
     this.bypasserNode = new AudioWorkletNode(actx, 'bypass-processor');
-    const oscillator  = actx.createOscillator();
-    oscillator.connect(this.bypasserNode).connect(actx.destination);
-    oscillator.start();
+    this.oscillator = actx.createOscillator();
+    this.oscillator.connect(this.bypasserNode).connect(actx.destination);
+    this.oscillator.start();
   }
   /* The example below initially demonstrated a one-off scheduled event. I've modified it to play
     based on the AudioContext's currentTime so that it can be replayed at the press of a button. 
@@ -59,20 +59,24 @@ class App extends Component {
     parameter during playback. */
     onePoleFilter() {
       const { actx } = this;
+
       const beginning = actx.currentTime;
       const middle = actx.currentTime + 4;
       const end = actx.currentTime + 8;
+
       this.filterNode = new AudioWorkletNode(actx, 'one-pole-processor');
-      const oscillator = actx.createOscillator();
-      oscillator.connect(this.filterNode).connect(actx.destination);
-      oscillator.start();
+      this.oscillator = actx.createOscillator();
+      this.oscillator.connect(this.filterNode).connect(actx.destination);
+      this.oscillator.start();
+
       const frequencyParam = this.filterNode.parameters.get('frequency');
       frequencyParam
           .setValueAtTime(0.01, beginning)
           .exponentialRampToValueAtTime(actx.sampleRate * 0.5, middle)
           .exponentialRampToValueAtTime(0.01, end);
+
       // This implementation of osc.onended is glitchy because the beginning, middle, and end must be managed in state.
-      // oscillator.onended = () => {
+      // this.oscillator.onended = () => {
       //     this.setState({ isPlaying: false })
       // }
     }
@@ -91,14 +95,14 @@ class App extends Component {
     }
     bitCrusher() {
       const { actx } = this;
-      const oscillator = actx.createOscillator();
+      this.oscillator = actx.createOscillator();
       this.bitCrusherNode = new AudioWorkletNode(actx, 'bit-crusher-processor');
       const paramBitDepth = this.bitCrusherNode.parameters.get('bitDepth');
       const paramReduction = this.bitCrusherNode.parameters.get('frequencyReduction');
-      oscillator.type = 'sawtooth';
-      oscillator.frequency.value = 5000;
+      this.oscillator.type = 'sawtooth';
+      this.oscillator.frequency.value = 5000;
       paramBitDepth.setValueAtTime(1, 0);
-      oscillator.connect(this.bitCrusherNode).connect(actx.destination);
+      this.oscillator.connect(this.bitCrusherNode).connect(actx.destination);
       const beginning = actx.currentTime;
       const middle = actx.currentTime + 4;
       const end = actx.currentTime + 8;
@@ -108,102 +112,99 @@ class App extends Component {
       paramReduction.linearRampToValueAtTime(0.1, middle);
       paramReduction.exponentialRampToValueAtTime(0.01, end);
       // Play the tone for 8 seconds.
-      oscillator.start();
-      oscillator.stop(end);
+      this.oscillator.start();
+      this.oscillator.stop(end);
     }
   /* The function below loads modules when selected from the dropdown menu. */
-handleSelect(e) {
-    if(this.state.isPlaying) return;
-    this.setState({selected: e.key, moduleLoaded: false}, async () => {
-      /* If no AudioContext, instantiate one and load modules */
-      if(!this.actx) {
-        try {
-          console.log('New context instantiated')
-          this.actx = await new (window.AudioContext || window.webkitAudioContext)();
-        } catch(e) {
-            console.log(`Sorry, but your browser doesn't support the Web Audio API!`, e);
-        }
-      } 
-      switch(e.key) {
-        case 'Bypass Filter':
-          this.loadModule('bypass-processor')
-          break;
-        case 'One Pole Filter':
-          this.loadModule('one-pole-processor')
-          break;
-        case 'Noise':
-          this.loadModule('noise-generator');
-          break;
-        case 'Bitcrusher':
-          this.loadModule('bit-crusher-processor')
-          break;
+  async handleSelect(e) {
+    this.setState({selected: e.key, moduleLoaded: false});
+    /* If no AudioContext, instantiate one and load modules */
+    if(!this.actx) {
+      try {
+        console.log('New context instantiated')
+        this.actx = await new (window.AudioContext || window.webkitAudioContext)();
+      } catch(e) {
+          console.log(`Sorry, but your browser doesn't support the Web Audio API!`, e);
       }
-    });
+    } 
+    switch(e.key) {
+      case 'Bypass Filter':
+        this.loadModule('bypass-processor')
+        break;
+      case 'One Pole Filter':
+        this.loadModule('one-pole-processor')
+        break;
+      case 'Noise':
+        this.loadModule('noise-generator');
+        break;
+      case 'Bitcrusher':
+        this.loadModule('bit-crusher-processor')
+        break;
+    }
   }
   /* The function below handles the starting and stopping of the currently loaded module.  */
-  handleClick() {
+  togglePlay() {
     const { state } = this;
     if(state.selected) {
-      this.setState({isPlaying: !state.isPlaying}, () => {
-        switch(state.selected) {
-          case 'Bypass Filter':
-              if(state.isPlaying) {
-                console.log(`stopping ${state.selected}`)
-                this.bypasserNode.port.postMessage(false)
-              } else {
-                console.log(`playing ${state.selected}`)
-                this.bypasser();
-                this.bypasserNode.port.postMessage(true);          
-              }
-              break;
-          case 'One Pole Filter':
-            if(state.isPlaying) {
-              console.log(`stopping ${state.selected}`)
-              this.filterNode.port.postMessage(false);          
-            } else {
-              console.log(`playing ${state.selected}`)
-              this.onePoleFilter();
-              this.filterNode.port.postMessage(true);          
-            }
-            break;
-            case 'Noise':
-              if(state.isPlaying) {
-                console.log(`stopping ${state.selected}`)
-                this.noiseGeneratorNode.port.postMessage(false);          
-              } else {
-                console.log(`playing ${state.selected}`)
-                this.noiseGenerator();
-                this.noiseGeneratorNode.port.postMessage(true);          
-              }
-            break;
-            case 'Bitcrusher':
-            if(state.isPlaying) {
-              console.log(`stopping ${state.selected}`)
-              this.bitCrusherNode.port.postMessage(false);          
-            } else {
-              console.log(`playing ${state.selected}`)
-              this.bitCrusher();
-              this.bitCrusherNode.port.postMessage(true);          
-            }
-            break;
-        }
-      });    
+      this.setState({isPlaying: !state.isPlaying});    
     }    
+    switch(state.selected) {
+      case 'Bypass Filter':
+          if(state.isPlaying) {
+            console.log(`stopping ${state.selected}`)
+            this.bypasserNode.port.postMessage(false)
+          } else {
+            console.log(`playing ${state.selected}`)
+            this.bypasser();
+            this.bypasserNode.port.postMessage(true);          
+          }
+          break;
+      case 'One Pole Filter':
+        if(state.isPlaying) {
+          console.log(`stopping ${state.selected}`)
+          this.filterNode.port.postMessage(false);          
+        } else {
+          console.log(`playing ${state.selected}`)
+          this.onePoleFilter();
+          this.filterNode.port.postMessage(true);          
+        }
+        break;
+        case 'Noise':
+          if(state.isPlaying) {
+            console.log(`stopping ${state.selected}`)
+            this.noiseGeneratorNode.port.postMessage(false);          
+          } else {
+            console.log(`playing ${state.selected}`)
+            this.noiseGenerator();
+            this.noiseGeneratorNode.port.postMessage(true);          
+          }
+        break;
+        case 'Bitcrusher':
+        if(state.isPlaying) {
+          console.log(`stopping ${state.selected}`)
+          this.bitCrusherNode.port.postMessage(false);          
+        } else {
+          console.log(`playing ${state.selected}`)
+          this.bitCrusher();
+          this.bitCrusherNode.port.postMessage(true);          
+        }
+        break;
+    }
   }
   render() {
-    const { state, processorMenu } = this;
+    const { state, menu } = this;
     return (
       <div className="App">
         <header className="App-header">
           <img src={logo} className="App-logo" alt="logo" />
           <span>React + AudioWorklet = ❤</span>
           <div style={{float:'left', width: '100%'}}>
-            <Dropdown overlay={processorMenu} size='small'>
+            <Dropdown overlay={menu} size='small'>
               <a className="ant-dropdown-link" href="#">
                 {state.selected ? state.selected : 'Select a module'} <Icon type="down" />
               </a>
             </Dropdown>
-            <Button ghost onClick={() => this.handleClick()} style={{marginLeft:'1%'}}>{state.isPlaying ? 'Stop' : 'Start'}</Button>
+            <Button ghost onClick={() => this.togglePlay()} style={{marginLeft:'1%'}}>{state.isPlaying ? 'Stop' : 'Start'}</Button>
           </div>
         </header>
       </div>
