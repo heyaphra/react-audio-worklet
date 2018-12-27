@@ -175,8 +175,8 @@ class App extends Component {
       case 'One Pole Filter':
         toggleNode(state.node, state.isPlaying, this.onePoleFilter)        
       break;
-        case 'Noise':
-          toggleNode(state.node, state.isPlaying, this.noiseGenerator)        
+      case 'Noise':
+        toggleNode(state.node, state.isPlaying, this.noiseGenerator)        
       break;
       case 'Bitcrusher':
           toggleNode(state.node, state.isPlaying, this.bitCrusher)        
