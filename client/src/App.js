@@ -47,10 +47,12 @@ class App extends Component {
      connects an oscillator to it, and starts the oscillator */
   bypasser() {
     const { actx } = this;
-    this.bypasserNode = new AudioWorkletNode(actx, 'bypass-processor');
-    this.oscillator = actx.createOscillator();
-    this.oscillator.connect(this.bypasserNode).connect(actx.destination);
-    this.oscillator.start();
+    const bypasserNode = new AudioWorkletNode(actx, 'bypass-processor');
+    this.setState({node: bypasserNode})
+    const oscillator = actx.createOscillator();
+    oscillator.connect(bypasserNode).connect(actx.destination);
+    oscillator.start();
+    return bypasserNode;
   }
   /* The example below initially demonstrated a one-off scheduled event. I've modified it to play
     based on the AudioContext's currentTime so that it can be replayed at the press of a button. 
@@ -64,16 +66,20 @@ class App extends Component {
       const middle = actx.currentTime + 4;
       const end = actx.currentTime + 8;
 
-      this.filterNode = new AudioWorkletNode(actx, 'one-pole-processor');
-      this.oscillator = actx.createOscillator();
-      this.oscillator.connect(this.filterNode).connect(actx.destination);
-      this.oscillator.start();
+      const filterNode = new AudioWorkletNode(actx, 'one-pole-processor');
+      this.setState({node: filterNode})
 
-      const frequencyParam = this.filterNode.parameters.get('frequency');
+      const oscillator = actx.createOscillator();
+      oscillator.connect(filterNode).connect(actx.destination);
+      oscillator.start();
+
+      const frequencyParam = filterNode.parameters.get('frequency');
       frequencyParam
           .setValueAtTime(0.01, beginning)
           .exponentialRampToValueAtTime(actx.sampleRate * 0.5, middle)
           .exponentialRampToValueAtTime(0.01, end);
+
+      return filterNode;
 
       // This implementation of osc.onended is glitchy because the beginning, middle, and end must be managed in state.
       // this.oscillator.onended = () => {
@@ -84,25 +90,29 @@ class App extends Component {
       const { actx } = this;
       const modulator = new OscillatorNode(actx);
       const modGain = new GainNode(actx);
-      this.noiseGeneratorNode = new AudioWorkletNode(actx, 'noise-generator');
-      this.noiseGeneratorNode.connect(actx.destination);
+      const noiseGeneratorNode = new AudioWorkletNode(actx, 'noise-generator');
+      this.setState({node: noiseGeneratorNode})
+      noiseGeneratorNode.connect(actx.destination);
       // Connect the oscillator to 'amplitude' AudioParam.
-      const paramAmp = this.noiseGeneratorNode.parameters.get('amplitude');
+      const paramAmp = noiseGeneratorNode.parameters.get('amplitude');
       modulator.connect(modGain).connect(paramAmp);
       modulator.frequency.value = 0.5;
       modGain.gain.value = 0.75;
       modulator.start();
+      
+      return noiseGeneratorNode;
     }
     bitCrusher() {
       const { actx } = this;
-      this.oscillator = actx.createOscillator();
-      this.bitCrusherNode = new AudioWorkletNode(actx, 'bit-crusher-processor');
-      const paramBitDepth = this.bitCrusherNode.parameters.get('bitDepth');
-      const paramReduction = this.bitCrusherNode.parameters.get('frequencyReduction');
-      this.oscillator.type = 'sawtooth';
-      this.oscillator.frequency.value = 5000;
+      const oscillator = actx.createOscillator();
+      const bitCrusherNode = new AudioWorkletNode(actx, 'bit-crusher-processor');
+      this.setState({node: bitCrusherNode});
+      const paramBitDepth = bitCrusherNode.parameters.get('bitDepth');
+      const paramReduction = bitCrusherNode.parameters.get('frequencyReduction');
+      oscillator.type = 'sawtooth';
+      oscillator.frequency.value = 5000;
       paramBitDepth.setValueAtTime(1, 0);
-      this.oscillator.connect(this.bitCrusherNode).connect(actx.destination);
+      oscillator.connect(bitCrusherNode).connect(actx.destination);
       const beginning = actx.currentTime;
       const middle = actx.currentTime + 4;
       const end = actx.currentTime + 8;
@@ -112,8 +122,10 @@ class App extends Component {
       paramReduction.linearRampToValueAtTime(0.1, middle);
       paramReduction.exponentialRampToValueAtTime(0.01, end);
       // Play the tone for 8 seconds.
-      this.oscillator.start();
-      this.oscillator.stop(end);
+      oscillator.start();
+      oscillator.stop(end);
+
+      return bitCrusherNode;
     }
   /* The function below loads modules when selected from the dropdown menu. */
   async handleSelect(e) {
@@ -144,53 +156,38 @@ class App extends Component {
     }
   }
   /* The function below handles the starting and stopping of the currently loaded module.  */
-  togglePlay() {
+  handleClick() {
     const { state } = this;
     if(state.selected) {
       this.setState({isPlaying: !state.isPlaying});    
-    }    
+    }  
+
+    const toggleNode = (node, isPlaying, cb) => {
+      if(isPlaying) {
+        console.log(`stopping ${state.selected}`)
+        node.port.postMessage(false)
+      } else {
+        console.log(`playing ${state.selected}`)
+        node = cb.bind(this)();
+        node.port.postMessage(true);          
+      }
+    }  
+
     switch(state.selected) {
       case 'Bypass Filter':
-          if(state.isPlaying) {
-            console.log(`stopping ${state.selected}`)
-            this.bypasserNode.port.postMessage(false)
-          } else {
-            console.log(`playing ${state.selected}`)
-            this.bypasser();
-            this.bypasserNode.port.postMessage(true);          
-          }
-          break;
+        toggleNode(state.node, state.isPlaying, this.bypasser)
+      break;
       case 'One Pole Filter':
-        if(state.isPlaying) {
-          console.log(`stopping ${state.selected}`)
-          this.filterNode.port.postMessage(false);          
-        } else {
-          console.log(`playing ${state.selected}`)
-          this.onePoleFilter();
-          this.filterNode.port.postMessage(true);          
-        }
-        break;
+        toggleNode(state.node, state.isPlaying, this.onePoleFilter)        
+      break;
         case 'Noise':
-          if(state.isPlaying) {
-            console.log(`stopping ${state.selected}`)
-            this.noiseGeneratorNode.port.postMessage(false);          
-          } else {
-            console.log(`playing ${state.selected}`)
-            this.noiseGenerator();
-            this.noiseGeneratorNode.port.postMessage(true);          
-          }
-        break;
+          toggleNode(state.node, state.isPlaying, this.noiseGenerator)        
+      break;
         case 'Bitcrusher':
-        if(state.isPlaying) {
-          console.log(`stopping ${state.selected}`)
-          this.bitCrusherNode.port.postMessage(false);          
-        } else {
-          console.log(`playing ${state.selected}`)
-          this.bitCrusher();
-          this.bitCrusherNode.port.postMessage(true);          
-        }
-        break;
+          toggleNode(state.node, state.isPlaying, this.bitCrusher)        
+      break;
     }
+
   }
   render() {
     const { state, menu } = this;
@@ -205,7 +202,7 @@ class App extends Component {
                 {state.selected ? state.selected : 'Select a module'} <Icon type="down" />
               </a>
             </Dropdown>
-            <Button ghost onClick={() => this.togglePlay()} style={{marginLeft:'1%'}}>{state.isPlaying ? 'Stop' : 'Start'}</Button>
+            <Button ghost onClick={() => this.handleClick()} style={{marginLeft:'1%'}}>{state.isPlaying ? 'Stop' : 'Start'}</Button>
           </div>
         </header>
       </div>
