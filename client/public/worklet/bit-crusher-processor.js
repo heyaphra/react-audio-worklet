@@ -26,9 +26,12 @@ class BitCrusherProcessor extends AudioWorkletProcessor {
       this.phase_ = 0;
       this.lastSampleValue_ = 0;
       this.isPlaying = true;
-      this.port.onmessage = (event) => {
-        this.isPlaying = event.data;
-      };
+      this.port.onmessage = this.onmessage.bind(this)
+    }
+
+    onmessage(event) {
+      const { data } = event;
+      this.isPlaying = data;
     }
   
     process(inputs, outputs, parameters) {

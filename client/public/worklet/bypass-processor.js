@@ -10,10 +10,12 @@ class BypassProcessor extends AudioWorkletProcessor {
     constructor() {
       super();
       this.isPlaying = true;
-      this.port.onmessage = (event) => {
-        this.isPlaying = event.data;
-        console.log(event.data)
-      };  
+      this.port.onmessage = this.onmessage.bind(this)
+    }
+
+    onmessage(event) {
+      const { data } = event;
+      this.isPlaying = data;
     }
   
     process(inputs, outputs) {

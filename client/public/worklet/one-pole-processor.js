@@ -21,12 +21,15 @@ class OnePoleProcessor extends AudioWorkletProcessor {
     constructor() {
       super();
       this.isPlaying = true;
-      this.port.onmessage = (event) => {
-        this.isPlaying = event.data;
-      }; 
+      this.port.onmessage = this.onmessage.bind(this)
       this.updateCoefficientsWithFrequency_(250);
     }
-  
+
+    onmessage(event) {
+      const { data } = event;
+      this.isPlaying = data;
+    }
+
     updateCoefficientsWithFrequency_(frequency) {
       this.b1_ = Math.exp(-2 * Math.PI * frequency / sampleRate);
       this.a0_ = 1.0 - this.b1_;
