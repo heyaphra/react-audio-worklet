@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import { Menu, Dropdown, Icon, Button } from 'antd';
+import { Bypasser, onePoleFilter, noiseGenerator, bitCrusher } from './Demos'
 
 class App extends Component {
   constructor() {
@@ -11,27 +12,6 @@ class App extends Component {
       moduleLoaded: false, /* Has the current selected module finished loading? */
       isPlaying: false /* Is a module currently playing? */
     }
-    /* Menu is an overlay for the Ant Design dropdown component, passed in via props. */
-    this.menu = (
-      <Menu onClick={(e) => this.handleSelect(e)} selectedKeys={[this.state.current]}>
-        <Menu.Item key="Bypass Filter" custom='prop'>
-          Bypass Filter
-        </Menu.Item>
-        <Menu.Item key="One Pole Filter">
-          One Pole Filter
-        </Menu.Item>
-        <Menu.Item key="Noise">
-          Noise
-        </Menu.Item>
-        <Menu.Item key="Bitcrusher">
-          Bitcrusher
-        </Menu.Item>   
-      </Menu>
-    );
-    this.bypasser = this.bypasser.bind(this);
-    this.onePoleFilter = this.onePoleFilter.bind(this);
-    this.noiseGenerator = this.noiseGenerator.bind(this);
-    this.bitCrusher = this.bitCrusher.bind(this)
   }
   /* The function below takes module name as an arg and adds it to the AudioContext's audioWorklet */
   async loadModule(moduleName) {
@@ -47,83 +27,6 @@ class App extends Component {
       console.log(`Failed to load module ${moduleName}`);
     }
   }
-  /* The function below creates an AudioWorkletNode, connects it to our AudioContext,
-     connects an oscillator to it, and starts the oscillator */
-  bypasser() {
-    const { actx } = this;
-    const bypasserNode = new AudioWorkletNode(actx, 'bypass-processor');
-    const oscillator = actx.createOscillator();
-    this.setState({node: bypasserNode})
-    oscillator.connect(bypasserNode).connect(actx.destination);
-    oscillator.start();
-    return bypasserNode;
-  }
-  /* The example below initially demonstrated a one-off scheduled event. I've modified it to play
-    based on the AudioContext's currentTime so that it can be replayed at the press of a button. 
-    It creates a new AudioWorkletNode and a new oscillator, connects the new oscillator to the 
-    node, starts the oscillator, schedules it's termination, and fiddles with the node's frequency
-    parameter during playback. */
-    onePoleFilter() {
-      const { actx } = this;
-      const beginning = actx.currentTime;
-      const middle = actx.currentTime + 4;
-      const end = actx.currentTime + 8;
-      const filterNode = new AudioWorkletNode(actx, 'one-pole-processor');
-      const oscillator = actx.createOscillator();
-      const frequencyParam = filterNode.parameters.get('frequency');
-      this.setState({node: filterNode})
-      frequencyParam
-        .setValueAtTime(0.01, beginning)
-        .exponentialRampToValueAtTime(actx.sampleRate * 0.5, middle)
-        .exponentialRampToValueAtTime(0.01, end);
-      oscillator.connect(filterNode).connect(actx.destination);
-      oscillator.start();
-      return filterNode;
-      // If I want to implement the below method without UI glitches, time demarcations must be managed in state.
-      // this.oscillator.onended = () => {
-      //     this.setState({ isPlaying: false })
-      // }
-    }
-    noiseGenerator() {
-      const { actx } = this;
-      const modulator = new OscillatorNode(actx);
-      const modGain = new GainNode(actx);
-      const noiseGeneratorNode = new AudioWorkletNode(actx, 'noise-generator');
-      const paramAmp = noiseGeneratorNode.parameters.get('amplitude');
-      this.setState({node: noiseGeneratorNode})
-      noiseGeneratorNode.connect(actx.destination);
-      // Connect the oscillator to 'amplitude' AudioParam.
-      modulator.connect(modGain).connect(paramAmp);
-      modulator.frequency.value = 0.5;
-      modGain.gain.value = 0.75;
-      modulator.start();
-      
-      return noiseGeneratorNode;
-    }
-    bitCrusher() {
-      const { actx } = this;
-      const oscillator = actx.createOscillator();
-      const bitCrusherNode = new AudioWorkletNode(actx, 'bit-crusher-processor');
-      const paramBitDepth = bitCrusherNode.parameters.get('bitDepth');
-      const paramReduction = bitCrusherNode.parameters.get('frequencyReduction');
-      const beginning = actx.currentTime;
-      const middle = actx.currentTime + 4;
-      const end = actx.currentTime + 8;
-      this.setState({node: bitCrusherNode});
-      oscillator.type = 'sawtooth';
-      oscillator.frequency.value = 5000;
-      oscillator.connect(bitCrusherNode).connect(actx.destination);
-      // Play the tone for 8 seconds.
-      oscillator.start();
-      oscillator.stop(end);
-      paramBitDepth.setValueAtTime(1, 0);
-      // |frequencyReduction| parameters will be automated and changing over
-      // time. Thus its parameter array will have 128 values.
-      paramReduction.setValueAtTime(0.01, beginning);
-      paramReduction.linearRampToValueAtTime(0.1, middle);
-      paramReduction.exponentialRampToValueAtTime(0.01, end);
-      return bitCrusherNode;
-    }
   /* The function below loads modules when selected from the dropdown menu. */
   handleSelect(e) {
     if(this.state.isPlaying) return;
@@ -164,27 +67,45 @@ class App extends Component {
         node.port.postMessage(false)
       } else {
         console.log(`playing ${state.selected}`)
-        node = cb();
+        node = cb(this);
+        this.setState({ node });
         node.port.postMessage(true);          
       }
     }  
     switch(state.selected) {
       case 'Bypass Filter':
-        toggleNode(state.node, state.isPlaying, this.bypasser)
+        toggleNode(state.node, state.isPlaying, Bypasser)
       break;
       case 'One Pole Filter':
-        toggleNode(state.node, state.isPlaying, this.onePoleFilter)        
+        toggleNode(state.node, state.isPlaying, onePoleFilter)        
       break;
       case 'Noise':
-        toggleNode(state.node, state.isPlaying, this.noiseGenerator)        
+        toggleNode(state.node, state.isPlaying, noiseGenerator)        
       break;
       case 'Bitcrusher':
-        toggleNode(state.node, state.isPlaying, this.bitCrusher)        
+        toggleNode(state.node, state.isPlaying, bitCrusher)        
       break;
     }
   }
   render() {
-    const { state, menu } = this;
+    const { state } = this;
+    /* Menu is an overlay for the Ant Design dropdown component, passed in via props. */
+    const menu = (
+      <Menu onClick={(e) => this.handleSelect(e)} selectedKeys={[this.state.current]}>
+        <Menu.Item key="Bypass Filter" custom='prop'>
+          Bypass Filter
+        </Menu.Item>
+        <Menu.Item key="One Pole Filter">
+          One Pole Filter
+        </Menu.Item>
+        <Menu.Item key="Noise">
+          Noise
+        </Menu.Item>
+        <Menu.Item key="Bitcrusher">
+          Bitcrusher
+        </Menu.Item>   
+      </Menu>
+    );
     return (
       <div className="App">
         <header className="App-header">
