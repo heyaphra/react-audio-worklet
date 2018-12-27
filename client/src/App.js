@@ -52,8 +52,8 @@ class App extends Component {
   bypasser() {
     const { actx } = this;
     const bypasserNode = new AudioWorkletNode(actx, 'bypass-processor');
-    this.setState({node: bypasserNode})
     const oscillator = actx.createOscillator();
+    this.setState({node: bypasserNode})
     oscillator.connect(bypasserNode).connect(actx.destination);
     oscillator.start();
     return bypasserNode;
@@ -71,19 +71,14 @@ class App extends Component {
       const filterNode = new AudioWorkletNode(actx, 'one-pole-processor');
       const oscillator = actx.createOscillator();
       const frequencyParam = filterNode.parameters.get('frequency');
-
       this.setState({node: filterNode})
-
       frequencyParam
-      .setValueAtTime(0.01, beginning)
-      .exponentialRampToValueAtTime(actx.sampleRate * 0.5, middle)
-      .exponentialRampToValueAtTime(0.01, end);
-
+        .setValueAtTime(0.01, beginning)
+        .exponentialRampToValueAtTime(actx.sampleRate * 0.5, middle)
+        .exponentialRampToValueAtTime(0.01, end);
       oscillator.connect(filterNode).connect(actx.destination);
       oscillator.start();
-
       return filterNode;
-
       // If I want to implement the below method without UI glitches, time demarcations must be managed in state.
       // this.oscillator.onended = () => {
       //     this.setState({ isPlaying: false })
@@ -95,9 +90,7 @@ class App extends Component {
       const modGain = new GainNode(actx);
       const noiseGeneratorNode = new AudioWorkletNode(actx, 'noise-generator');
       const paramAmp = noiseGeneratorNode.parameters.get('amplitude');
-
       this.setState({node: noiseGeneratorNode})
-
       noiseGeneratorNode.connect(actx.destination);
       // Connect the oscillator to 'amplitude' AudioParam.
       modulator.connect(modGain).connect(paramAmp);
@@ -116,9 +109,7 @@ class App extends Component {
       const beginning = actx.currentTime;
       const middle = actx.currentTime + 4;
       const end = actx.currentTime + 8;
-
       this.setState({node: bitCrusherNode});
-
       oscillator.type = 'sawtooth';
       oscillator.frequency.value = 5000;
       oscillator.connect(bitCrusherNode).connect(actx.destination);
@@ -131,7 +122,6 @@ class App extends Component {
       paramReduction.setValueAtTime(0.01, beginning);
       paramReduction.linearRampToValueAtTime(0.1, middle);
       paramReduction.exponentialRampToValueAtTime(0.01, end);
-
       return bitCrusherNode;
     }
   /* The function below loads modules when selected from the dropdown menu. */
