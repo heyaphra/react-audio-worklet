@@ -1,5 +1,8 @@
-  /* The function below creates an AudioWorkletNode, connects it to our AudioContext,
-     connects an oscillator to it, and starts the oscillator */
+/*  The examples below utilize the Chrome Team's code practically verbatim, with the exception of some 
+    modifications. Demos that produce sounds with discrete start and finish times are adjusted using
+    the AudioContext's currentTime so it may be re-triggered using the start/stop button. 
+    Additionally, each function returns an AudioWorkletNode so that we can start and stop audio by
+    sending messages between the App and the AudioWorklet processor.  */
 export const Bypasser = (App) => {
     const { actx } = App;
     const bypasserNode = new AudioWorkletNode(actx, 'bypass-processor');
@@ -8,11 +11,6 @@ export const Bypasser = (App) => {
     oscillator.start();
     return bypasserNode;
 }
-/* The example below initially demonstrated a one-off scheduled event. I've modified it to play
-    based on the AudioContext's currentTime so that it can be replayed at the press of a button. 
-    It creates a new AudioWorkletNode and a new oscillator, connects the new oscillator to the 
-    node, starts the oscillator, schedules it's termination, and fiddles with the node's frequency
-    parameter during playback. */
 export const onePoleFilter = (App) => {
         const { actx } = App;
         const beginning = actx.currentTime;
@@ -29,7 +27,6 @@ export const onePoleFilter = (App) => {
         oscillator.start();
         return filterNode;
 }
-
 export const noiseGenerator = (App) => {
     const { actx } = App;
     const modulator = new OscillatorNode(actx);
