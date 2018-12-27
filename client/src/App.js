@@ -178,7 +178,7 @@ class App extends Component {
         case 'Noise':
           toggleNode(state.node, state.isPlaying, this.noiseGenerator)        
       break;
-        case 'Bitcrusher':
+      case 'Bitcrusher':
           toggleNode(state.node, state.isPlaying, this.bitCrusher)        
       break;
     }
