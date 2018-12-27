@@ -44,37 +44,38 @@ class App extends Component {
       this.loadModule(processor)
     });
   }
+  toggleNode(node, isPlaying, cb){
+    if(isPlaying) {
+      console.log(`stopping ${this.state.selected}`)
+      node.port.postMessage(false)
+    } else {
+      console.log(`playing ${this.state.selected}`)
+      node = cb(this);
+      this.setState({ node });
+      node.port.postMessage(true);          
+    }
+  }
   /* The function below handles the starting and stopping of the currently loaded module.  */
   handleClick() {
     const { state } = this;
     if(state.selected) {
-      this.setState({isPlaying: !state.isPlaying});    
-    }  
-    const toggleNode = (node, isPlaying, cb) => {
-      if(isPlaying) {
-        console.log(`stopping ${state.selected}`)
-        node.port.postMessage(false)
-      } else {
-        console.log(`playing ${state.selected}`)
-        node = cb(this);
-        this.setState({ node });
-        node.port.postMessage(true);          
-      }
-    }  
-    switch(state.selected) {
-      case 'Bypass Filter':
-        toggleNode(state.node, state.isPlaying, Bypasser)
-      break;
-      case 'One Pole Filter':
-        toggleNode(state.node, state.isPlaying, onePoleFilter)        
-      break;
-      case 'Noise':
-        toggleNode(state.node, state.isPlaying, noiseGenerator)        
-      break;
-      case 'Bitcrusher':
-        toggleNode(state.node, state.isPlaying, bitCrusher)        
-      break;
-    }
+      this.setState({isPlaying: !state.isPlaying}, () => {
+        switch(state.selected) {
+          case 'Bypass Filter':
+            this.toggleNode(state.node, state.isPlaying, Bypasser)
+          break;
+          case 'One Pole Filter':
+            this.toggleNode(state.node, state.isPlaying, onePoleFilter)        
+          break;
+          case 'Noise':
+            this.toggleNode(state.node, state.isPlaying, noiseGenerator)        
+          break;
+          case 'Bitcrusher':
+            this.toggleNode(state.node, state.isPlaying, bitCrusher)        
+          break;
+        }
+      });    
+    }    
   }
   render() {
     const { state } = this;
