@@ -1,5 +1,5 @@
 /*  The examples below utilize the Chrome Team's code practically verbatim, with the exception of some 
-    modifications. Demos that produce sounds with discrete start and finish times are adjusted using
+    slight modifications. Demos that produce sounds with discrete start and finish times are adjusted using
     the AudioContext's currentTime so it may be re-triggered using the start/stop button. 
     Additionally, each function returns an AudioWorkletNode so that we can start and stop audio by
     sending messages between the App and the AudioWorklet processor.  */

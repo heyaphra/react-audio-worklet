@@ -8,9 +8,11 @@ class App extends Component {
   constructor() {
     super();
     this.state = {
-      selected: null, /* Which module has been selected from the menu */
-      moduleLoaded: false, /* Has the current selected module finished loading? */
-      isPlaying: false /* Is a module currently playing? */
+      selected: null, /* Which module has been selected from the menu? */
+      isPlaying: false, /* Is audio currently playing? */
+      processor: null, /* Current AudioWorkletProcessor */
+      node: null, /* Current AudioWorkletNode */
+      moduleLoaded: false, /* Has the selected AudioWorkletProcessor finished loading? */
     }
   }
   /* The function below takes module name as an arg and adds it to the AudioContext's audioWorklet */
@@ -28,32 +30,19 @@ class App extends Component {
     }
   }
   /* The function below loads modules when selected from the dropdown menu. */
-  handleSelect(e) {
+  handleSelect(name, processor) {
     if(this.state.isPlaying) return;
-    this.setState({selected: e.key, moduleLoaded: false});
-    /* If no AudioContext, instantiate one and load modules */
-    if(!this.actx) {
-      try {
-        console.log('New context instantiated')
-        this.actx = new (window.AudioContext || window.webkitAudioContext)();
-      } catch(e) {
-          console.log(`Sorry, but your browser doesn't support the Web Audio API!`, e);
-      }
-    } 
-    switch(e.key) {
-      case 'Bypass Filter':
-        this.loadModule('bypass-processor')
-      break;
-      case 'One Pole Filter':
-        this.loadModule('one-pole-processor')
-        break;
-      case 'Noise':
-        this.loadModule('noise-generator');
-        break;
-      case 'Bitcrusher':
-        this.loadModule('bit-crusher-processor')
-      break;
-    }
+    this.setState({selected: name, processor, moduleLoaded: false}, () => {
+      if(!this.actx) {
+        try {
+          console.log('New context instantiated')
+          this.actx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch(e) {
+            console.log(`Sorry, but your browser doesn't support the Web Audio API!`, e);
+        }
+      } 
+      this.loadModule(processor)
+    });
   }
   /* The function below handles the starting and stopping of the currently loaded module.  */
   handleClick() {
@@ -91,17 +80,17 @@ class App extends Component {
     const { state } = this;
     /* Menu is an overlay for the Ant Design dropdown component, passed in via props. */
     const menu = (
-      <Menu onClick={(e) => this.handleSelect(e)} selectedKeys={[this.state.current]}>
-        <Menu.Item key="Bypass Filter" custom='prop'>
+      <Menu onClick={(e) => this.handleSelect(e.key, e.item.props.processor)} selectedKeys={[this.state.current]}>
+        <Menu.Item key="Bypass Filter" processor='bypass-processor'>
           Bypass Filter
         </Menu.Item>
-        <Menu.Item key="One Pole Filter">
+        <Menu.Item key="One Pole Filter" processor='one-pole-processor'>
           One Pole Filter
         </Menu.Item>
-        <Menu.Item key="Noise">
+        <Menu.Item key="Noise" processor='noise-generator'>
           Noise
         </Menu.Item>
-        <Menu.Item key="Bitcrusher">
+        <Menu.Item key="Bitcrusher" processor='bit-crusher-processor'>
           Bitcrusher
         </Menu.Item>   
       </Menu>
