@@ -28,6 +28,10 @@ class App extends Component {
         </Menu.Item>   
       </Menu>
     );
+    this.bypasser = this.bypasser.bind(this);
+    this.onePoleFilter = this.onePoleFilter.bind(this);
+    this.noiseGenerator = this.noiseGenerator.bind(this);
+    this.bitCrusher = this.bitCrusher.bind(this)
   }
   /* The function below takes module name as an arg and adds it to the AudioContext's audioWorklet */
   async loadModule(moduleName) {
@@ -61,27 +65,26 @@ class App extends Component {
     parameter during playback. */
     onePoleFilter() {
       const { actx } = this;
-
       const beginning = actx.currentTime;
       const middle = actx.currentTime + 4;
       const end = actx.currentTime + 8;
-
       const filterNode = new AudioWorkletNode(actx, 'one-pole-processor');
+      const oscillator = actx.createOscillator();
+      const frequencyParam = filterNode.parameters.get('frequency');
+
       this.setState({node: filterNode})
 
-      const oscillator = actx.createOscillator();
+      frequencyParam
+      .setValueAtTime(0.01, beginning)
+      .exponentialRampToValueAtTime(actx.sampleRate * 0.5, middle)
+      .exponentialRampToValueAtTime(0.01, end);
+
       oscillator.connect(filterNode).connect(actx.destination);
       oscillator.start();
 
-      const frequencyParam = filterNode.parameters.get('frequency');
-      frequencyParam
-          .setValueAtTime(0.01, beginning)
-          .exponentialRampToValueAtTime(actx.sampleRate * 0.5, middle)
-          .exponentialRampToValueAtTime(0.01, end);
-
       return filterNode;
 
-      // This implementation of osc.onended is glitchy because the beginning, middle, and end must be managed in state.
+      // If I want to implement the below method without UI glitches, time demarcations must be managed in state.
       // this.oscillator.onended = () => {
       //     this.setState({ isPlaying: false })
       // }
@@ -91,10 +94,12 @@ class App extends Component {
       const modulator = new OscillatorNode(actx);
       const modGain = new GainNode(actx);
       const noiseGeneratorNode = new AudioWorkletNode(actx, 'noise-generator');
+      const paramAmp = noiseGeneratorNode.parameters.get('amplitude');
+
       this.setState({node: noiseGeneratorNode})
+
       noiseGeneratorNode.connect(actx.destination);
       // Connect the oscillator to 'amplitude' AudioParam.
-      const paramAmp = noiseGeneratorNode.parameters.get('amplitude');
       modulator.connect(modGain).connect(paramAmp);
       modulator.frequency.value = 0.5;
       modGain.gain.value = 0.75;
@@ -106,36 +111,38 @@ class App extends Component {
       const { actx } = this;
       const oscillator = actx.createOscillator();
       const bitCrusherNode = new AudioWorkletNode(actx, 'bit-crusher-processor');
-      this.setState({node: bitCrusherNode});
       const paramBitDepth = bitCrusherNode.parameters.get('bitDepth');
       const paramReduction = bitCrusherNode.parameters.get('frequencyReduction');
-      oscillator.type = 'sawtooth';
-      oscillator.frequency.value = 5000;
-      paramBitDepth.setValueAtTime(1, 0);
-      oscillator.connect(bitCrusherNode).connect(actx.destination);
       const beginning = actx.currentTime;
       const middle = actx.currentTime + 4;
       const end = actx.currentTime + 8;
+
+      this.setState({node: bitCrusherNode});
+
+      oscillator.type = 'sawtooth';
+      oscillator.frequency.value = 5000;
+      oscillator.connect(bitCrusherNode).connect(actx.destination);
+      // Play the tone for 8 seconds.
+      oscillator.start();
+      oscillator.stop(end);
+      paramBitDepth.setValueAtTime(1, 0);
       // |frequencyReduction| parameters will be automated and changing over
       // time. Thus its parameter array will have 128 values.
       paramReduction.setValueAtTime(0.01, beginning);
       paramReduction.linearRampToValueAtTime(0.1, middle);
       paramReduction.exponentialRampToValueAtTime(0.01, end);
-      // Play the tone for 8 seconds.
-      oscillator.start();
-      oscillator.stop(end);
 
       return bitCrusherNode;
     }
   /* The function below loads modules when selected from the dropdown menu. */
-  async handleSelect(e) {
+  handleSelect(e) {
     if(this.state.isPlaying) return;
     this.setState({selected: e.key, moduleLoaded: false});
     /* If no AudioContext, instantiate one and load modules */
     if(!this.actx) {
       try {
         console.log('New context instantiated')
-        this.actx = await new (window.AudioContext || window.webkitAudioContext)();
+        this.actx = new (window.AudioContext || window.webkitAudioContext)();
       } catch(e) {
           console.log(`Sorry, but your browser doesn't support the Web Audio API!`, e);
       }
@@ -143,7 +150,7 @@ class App extends Component {
     switch(e.key) {
       case 'Bypass Filter':
         this.loadModule('bypass-processor')
-        break;
+      break;
       case 'One Pole Filter':
         this.loadModule('one-pole-processor')
         break;
@@ -152,7 +159,7 @@ class App extends Component {
         break;
       case 'Bitcrusher':
         this.loadModule('bit-crusher-processor')
-        break;
+      break;
     }
   }
   /* The function below handles the starting and stopping of the currently loaded module.  */
@@ -161,18 +168,16 @@ class App extends Component {
     if(state.selected) {
       this.setState({isPlaying: !state.isPlaying});    
     }  
-
     const toggleNode = (node, isPlaying, cb) => {
       if(isPlaying) {
         console.log(`stopping ${state.selected}`)
         node.port.postMessage(false)
       } else {
         console.log(`playing ${state.selected}`)
-        node = cb.bind(this)();
+        node = cb();
         node.port.postMessage(true);          
       }
     }  
-
     switch(state.selected) {
       case 'Bypass Filter':
         toggleNode(state.node, state.isPlaying, this.bypasser)
@@ -187,7 +192,6 @@ class App extends Component {
           toggleNode(state.node, state.isPlaying, this.bitCrusher)        
       break;
     }
-
   }
   render() {
     const { state, menu } = this;
