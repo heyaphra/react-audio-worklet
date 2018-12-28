@@ -33,7 +33,7 @@ class App extends Component {
      It also handles instantiating an AudioContext since it's likely the first user gesture.*/
   handleSelect(name, processor) {
     if(this.state.isPlaying) return;
-    this.setState({selected: name, processor, moduleLoaded: false}, () => {
+    this.setState({ selected: name, processor }, () => {
       if(!this.actx) {
         try {
           console.log('New context instantiated')
@@ -47,11 +47,12 @@ class App extends Component {
   }
   /* toggleNode: starts and stops audio by sending a boolean via the AudioWorkletProcessor's message port.*/
   toggleNode(node, isPlaying, cb){
+    const { state } = this;
     if(isPlaying) {
-      console.log(`stopping ${this.state.selected}`)
+      console.log(`stopping ${state.selected}`)
       node.port.postMessage(false)
-    } else {
-      console.log(`playing ${this.state.selected}`)
+    } else if(state.moduleLoaded) {
+      console.log(`playing ${state.selected}`)
       node = cb(this);
       this.setState({ node });
       node.port.postMessage(true);          
