@@ -62,7 +62,7 @@ class App extends Component {
   handleClick() {
     const { state } = this;
     if(state.moduleLoaded) {
-      this.setState({isPlaying: !state.isPlaying}, () => {
+      this.setState({isPlaying: !state.isPlaying, moduleLoaded: false}, () => {
         switch(state.selected) {
           case 'Bypass Filter':
             this.toggleNode(state.node, state.isPlaying, Bypasser)
