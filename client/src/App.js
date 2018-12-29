@@ -31,7 +31,7 @@ class App extends Component {
      It also handles instantiating an AudioContext since it's likely the first user gesture.*/
   handleSelect(name, processor) {
     if(this.state.isPlaying) return;
-    this.setState({ selected: name, processor, moduleLoaded: false }, () => {
+    this.setState({ selected: name, processor }, () => {
       if(!this.actx) {
         try {
           console.log('New context instantiated')
@@ -49,7 +49,7 @@ class App extends Component {
     if(isPlaying) {
       console.log(`stopping ${state.selected}`)
       node.port.postMessage(false)
-    } else if(state.moduleLoaded) {
+    } else {
       console.log(`playing ${state.selected}`)
       node = cb(this);
       this.setState({ node });
@@ -59,7 +59,7 @@ class App extends Component {
   /* The function below handles the starting and stopping of the currently loaded module.  */
   handleClick() {
     const { state } = this;
-    if(state.selected) {
+    if(state.selected && state.moduleLoaded) {
       this.setState({isPlaying: !state.isPlaying }, () => {
         switch(state.selected) {
           case 'Bypass Filter':
