@@ -59,11 +59,9 @@ class App extends Component {
   /* The function below handles the starting and stopping of the currently loaded module.  */
   handleClick() {
     const { state } = this;
-    if(state.moduleLoaded) {
-      this.setState({isPlaying: !state.isPlaying }, () => {
-          this.toggleNode(state.node, state.isPlaying, state.processor.cb);
-      });    
-    }    
+    this.setState({isPlaying: !state.isPlaying }, () => {
+        this.toggleNode(state.node, state.isPlaying, state.processor.cb);
+    });    
   }
   render() {
     const { state } = this;
