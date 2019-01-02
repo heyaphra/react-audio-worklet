@@ -9,7 +9,7 @@
  * @extends AudioWorkletProcessor
  * @see https://webaudio.github.io/web-audio-api/#the-bitcrusher-node
  */
-export default class BitCrusherProcessor extends AudioWorkletProcessor {
+class BitCrusherProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
       return [
         {name: 'bitDepth', defaultValue: 12, minValue: 1, maxValue: 16}, {
@@ -26,9 +26,12 @@ export default class BitCrusherProcessor extends AudioWorkletProcessor {
       this.phase_ = 0;
       this.lastSampleValue_ = 0;
       this.isPlaying = true;
-      this.port.onmessage = (event) => {
-        this.isPlaying = event.data;
-      };
+      this.port.onmessage = this.onmessage.bind(this)
+    }
+
+    onmessage(event) {
+      const { data } = event;
+      this.isPlaying = data;
     }
   
     process(inputs, outputs, parameters) {

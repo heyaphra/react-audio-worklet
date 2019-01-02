@@ -23,12 +23,15 @@ class NoiseGenerator extends AudioWorkletProcessor {
     constructor() {
         super();
         this.isPlaying = true;
-        this.port.onmessage = (event) => {
-          this.isPlaying = event.data;
-        };
+        this.port.onmessage = this.onmessage.bind(this)
     }
     static get parameterDescriptors() {
       return [{name: 'amplitude', defaultValue: 0.25, minValue: 0, maxValue: 1}];
+    }
+
+    onmessage(event) {
+      const { data } = event;
+      this.isPlaying = data;
     }
   
     process(inputs, outputs, parameters) {
