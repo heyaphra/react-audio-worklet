@@ -9,23 +9,23 @@ class App extends Component {
   menuItems = [
     {
       key: 0,
-      processor: { name: "bit-crusher-processor", cb: () => bitCrusher },
+      processor: { label: "Bypass Filter", name: "bypass-processor", cb: () => Bypasser },
       label: <a onClick={(e) => e.preventDefault()}>Bypass Filter</a>,
     },
     {
       key: 1,
       label: <a onClick={(e) => e.preventDefault()}>One Pole Filter</a>,
-      processor: { name: "bypass-processor", cb: Bypasser },
+      processor: { label: "Noise", name: "noise-generator", cb: noiseGenerator },
     },
     {
       key: 2,
       label: <a onClick={(e) => e.preventDefault()}>Noise</a>,
-      processor: { name: "one-pole-processor", cb: onePoleFilter },
+      processor: { label: "One Pole Filter", name: "one-pole-processor", cb: onePoleFilter },
     },
     {
       key: 3,
       label: <a onClick={(e) => e.preventDefault()}>Bitcrusher</a>,
-      processor: { name: "bit-crusher-processor", cb: bitCrusher },
+      processor: { label: "Bitcrusher", name: "bit-crusher-processor", cb: bitCrusher },
     },
   ];
   constructor() {
@@ -86,7 +86,7 @@ class App extends Component {
     const onClick = ({ key }) => {
       const { processor } = this.menuItems[key];
 
-      this.handleSelect(processor.name, processor.cb);
+      this.handleSelect(processor.label, processor);
       // const
     };
     /* Menu is an overlay for the Ant Design dropdown component, passed in via props. */
