@@ -75,8 +75,9 @@ class App extends Component {
     } else {
       console.log(`playing ${state.processor.module}`);
       const node = state.processor.cb(this);
-      this.setState({ node });
-      node.port.postMessage(true);
+      this.setState({ node }, () => {
+        node.port.postMessage(true);
+      });
     }
     this.setState({ isPlaying: !state.isPlaying });
   }
